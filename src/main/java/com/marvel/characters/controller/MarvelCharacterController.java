@@ -5,6 +5,7 @@ import com.marvel.characters.service.MarvelCharacterService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +19,6 @@ import java.util.Optional;
 
 /**
  * REST controller for Marvel Comics characters.
- * Endpoints are added incrementally as features are implemented.
  */
 @RestController
 @RequestMapping("/api/characters")
@@ -77,5 +77,18 @@ public class MarvelCharacterController {
         character.setDeleted(false);
         MarvelCharacter saved = service.save(character);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /**
+     * DELETE /api/characters/{id} — logical delete (sets deleted=true).
+     * Does not physically remove the row. Returns 200 or 404.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<MarvelCharacter> delete(@PathVariable Long id) {
+        Optional<MarvelCharacter> optional = service.logicalDelete(id);
+        if (optional.isPresent()) {
+            return ResponseEntity.ok(optional.get());
+        }
+        return ResponseEntity.notFound().build();
     }
 }
