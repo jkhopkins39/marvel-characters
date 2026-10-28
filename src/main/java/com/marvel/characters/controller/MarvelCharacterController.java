@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * REST controller for Marvel Comics characters.
+ * Uses constructor injection and ResponseEntity for JSON responses with status codes.
  */
 @RestController
 @RequestMapping("/api/characters")
@@ -60,11 +60,7 @@ public class MarvelCharacterController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<MarvelCharacter> getById(@PathVariable Long id) {
-        Optional<MarvelCharacter> optional = service.findById(id);
-        if (optional.isPresent()) {
-            return ResponseEntity.ok(optional.get());
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(service.getByIdOrThrow(id));
     }
 
     /**
@@ -85,10 +81,6 @@ public class MarvelCharacterController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<MarvelCharacter> delete(@PathVariable Long id) {
-        Optional<MarvelCharacter> optional = service.logicalDelete(id);
-        if (optional.isPresent()) {
-            return ResponseEntity.ok(optional.get());
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(service.logicalDelete(id));
     }
 }

@@ -1,5 +1,7 @@
 package com.marvel.characters.service;
 
+import com.marvel.characters.exception.InvalidRequestException;
+import com.marvel.characters.exception.ResourceNotFoundException;
 import com.marvel.characters.model.MarvelCharacter;
 import com.marvel.characters.repository.MarvelCharacterRepository;
 import org.springframework.stereotype.Service;
@@ -50,11 +52,11 @@ public class MarvelCharacterService {
 
     /**
      * Filters active characters by universe (case-insensitive).
-     * Throws IllegalArgumentException when the universe value is blank.
+     * Throws InvalidRequestException when the universe value is blank.
      */
     public List<MarvelCharacter> filterByUniverse(String universe) {
         if (universe == null || universe.isBlank()) {
-            throw new IllegalArgumentException("Universe filter must not be blank");
+            throw new InvalidRequestException("Universe filter must not be blank");
         }
         String target = universe.trim().toLowerCase(Locale.ROOT);
         return getAllActive().stream()
@@ -69,7 +71,7 @@ public class MarvelCharacterService {
      */
     public List<MarvelCharacter> sortBy(String field) {
         if (field == null || field.isBlank()) {
-            throw new IllegalArgumentException("Sort field must not be blank");
+            throw new InvalidRequestException("Sort field must not be blank");
         }
 
         Comparator<MarvelCharacter> comparator;
@@ -91,7 +93,7 @@ public class MarvelCharacterService {
                 comparator = Comparator.comparing(MarvelCharacter::getFirstAppearanceYear);
                 break;
             default:
-                throw new IllegalArgumentException(
+                throw new InvalidRequestException(
                         "Unsupported sort field: " + field
                                 + ". Supported fields: name, alias, power, universe, firstAppearanceYear");
         }
@@ -110,15 +112,23 @@ public class MarvelCharacterService {
 
     /**
      * Logically deletes a character by setting deleted to true.
-     * Returns empty Optional if the character does not exist or is already deleted.
+     * Throws ResourceNotFoundException if the character does not exist or is already deleted.
      */
-    public Optional<MarvelCharacter> logicalDelete(Long id) {
+    public MarvelCharacter logicalDelete(Long id) {
         Optional<MarvelCharacter> optional = repository.findById(id);
         if (optional.isEmpty() || optional.get().isDeleted()) {
-            return Optional.empty();
+            throw new ResourceNotFoundException("Character not found with id: " + id);
         }
         MarvelCharacter character = optional.get();
         character.setDeleted(true);
-        return Optional.of(repository.save(character));
+        return repository.save(character);
+    }
+
+    /**
+     * Returns an active character by ID or throws ResourceNotFoundException.
+     */
+    public MarvelCharacter getByIdOrThrow(Long id) {
+        return findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("Character not found with id: " + id));
     }
 }
