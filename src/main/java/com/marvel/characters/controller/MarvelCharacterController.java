@@ -1,5 +1,6 @@
 package com.marvel.characters.controller;
 
+import com.marvel.characters.exception.ResourceNotFoundException;
 import com.marvel.characters.model.MarvelCharacter;
 import com.marvel.characters.service.MarvelCharacterService;
 import jakarta.validation.Valid;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * REST controller for Marvel Comics characters.
@@ -56,11 +58,15 @@ public class MarvelCharacterController {
 
     /**
      * GET /api/characters/{id} — find one active character by ID.
-     * Returns 200 when found, 404 when missing or logically deleted.
+     * Uses @PathVariable, findById(), and Optional. Returns 200 or 404.
      */
     @GetMapping("/{id}")
     public ResponseEntity<MarvelCharacter> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getByIdOrThrow(id));
+        Optional<MarvelCharacter> optional = service.findById(id);
+        if (optional.isPresent()) {
+            return ResponseEntity.ok(optional.get());
+        }
+        throw new ResourceNotFoundException("Character not found with id: " + id);
     }
 
     /**
