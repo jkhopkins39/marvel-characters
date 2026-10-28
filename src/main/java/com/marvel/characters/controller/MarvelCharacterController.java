@@ -2,9 +2,13 @@ package com.marvel.characters.controller;
 
 import com.marvel.characters.model.MarvelCharacter;
 import com.marvel.characters.service.MarvelCharacterService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,5 +65,17 @@ public class MarvelCharacterController {
             return ResponseEntity.ok(optional.get());
         }
         return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * POST /api/characters — create a new character from validated JSON.
+     * Returns 201 Created on success, 400 Bad Request when validation fails.
+     */
+    @PostMapping
+    public ResponseEntity<MarvelCharacter> create(@Valid @RequestBody MarvelCharacter character) {
+        character.setId(null);
+        character.setDeleted(false);
+        MarvelCharacter saved = service.save(character);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 }
