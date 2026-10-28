@@ -1,8 +1,13 @@
 package com.marvel.characters.controller;
 
+import com.marvel.characters.model.MarvelCharacter;
 import com.marvel.characters.service.MarvelCharacterService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * REST controller for Marvel Comics characters.
@@ -16,5 +21,13 @@ public class MarvelCharacterController {
 
     public MarvelCharacterController(MarvelCharacterService service) {
         this.service = service;
+    }
+
+    /**
+     * GET /api/characters — returns all active (not deleted) characters.
+     */
+    @GetMapping
+    public ResponseEntity<List<MarvelCharacter>> getAll() {
+        return ResponseEntity.ok(service.getAllActive());
     }
 }
