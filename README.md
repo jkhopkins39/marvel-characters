@@ -61,17 +61,28 @@ Base path: `/api/characters`
 | --- | --- | --- | --- |
 | `GET` | `/api/characters` | List all **active** characters | `200` |
 | `GET` | `/api/characters/{id}` | Get one active character by ID | `200`, `404` |
-| `GET` | `/api/characters?universe=Earth-616` | Filter active characters by universe | `200`, `400` |
-| `GET` | `/api/characters?sortBy=name` | Sort active characters by a supported field | `200`, `400` |
+| `GET` | `/api/characters?universe=Earth-616` | Filter by universe | `200`, `400` |
+| `GET` | `/api/characters?firstAppearanceYear=1966` | Filter by exact debut year | `200`, `400` |
+| `GET` | `/api/characters?beforeYear=1980` | Debut year **&lt;** value | `200`, `400` |
+| `GET` | `/api/characters?afterYear=1970` | Debut year **&gt;** value | `200`, `400` |
+| `GET` | `/api/characters?sortBy=name` | Sort by a supported field | `200`, `400` |
 | `POST` | `/api/characters` | Create a character from JSON | `201`, `400` |
 | `DELETE` | `/api/characters/{id}` | Logical delete (`deleted = true`) | `200`, `404` |
 
+Filters and `sortBy` can be combined, for example:
+`/api/characters?universe=Earth-616&beforeYear=1980&sortBy=firstAppearanceYear`
+
 ### Filter choices
 
-- Query param: `universe`
-- Example: `/api/characters?universe=Earth-616`
-- Matching is case-insensitive
-- Blank or empty `universe` returns **400 Bad Request**
+| Param | Meaning | Example |
+| --- | --- | --- |
+| `universe` | Exact match (case-insensitive) | `?universe=Earth-616` |
+| `firstAppearanceYear` | Exact debut year | `?firstAppearanceYear=1966` |
+| `beforeYear` | `firstAppearanceYear < year` | `?beforeYear=1980` |
+| `afterYear` | `firstAppearanceYear > year` | `?afterYear=1970` |
+
+- Blank `universe` returns **400 Bad Request**
+- Non-numeric year params return **400 Bad Request**
 
 ### Sort choices
 
@@ -135,6 +146,15 @@ curl "http://localhost:8080/api/characters?universe=Earth-1610"
 
 # 5. Invalid filter (400)
 curl "http://localhost:8080/api/characters?universe="
+
+# 5b. Exact year (200)
+curl "http://localhost:8080/api/characters?firstAppearanceYear=1966"
+
+# 5c. Before year (200) — debut before 1980
+curl "http://localhost:8080/api/characters?beforeYear=1980"
+
+# 5d. After year (200)
+curl "http://localhost:8080/api/characters?afterYear=1970"
 
 # 6. Valid sort (200)
 curl "http://localhost:8080/api/characters?sortBy=name"

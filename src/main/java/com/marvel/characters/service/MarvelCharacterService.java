@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Business logic for Marvel characters.
@@ -51,18 +52,64 @@ public class MarvelCharacterService {
     }
 
     /**
+     * Filters and optionally sorts active characters.
+     * Supported filters (combinable):
+     *   universe — exact match (case-insensitive)
+     *   firstAppearanceYear — exact year
+     *   beforeYear — firstAppearanceYear &lt; year
+     *   afterYear — firstAppearanceYear &gt; year
+     * Optional sortBy uses the same supported sort fields as sortBy(...).
+     */
+    public List<MarvelCharacter> search(
+            String universe,
+            Integer firstAppearanceYear,
+            Integer beforeYear,
+            Integer afterYear,
+            String sortBy) {
+
+        if (universe != null && universe.isBlank()) {
+            throw new InvalidRequestException("Universe filter must not be blank");
+        }
+        if (beforeYear != null && afterYear != null && beforeYear <= afterYear) {
+            throw new InvalidRequestException(
+                    "beforeYear must be greater than afterYear when both are provided");
+        }
+
+        Stream<MarvelCharacter> stream = getAllActive().stream();
+
+        if (universe != null) {
+            String target = universe.trim().toLowerCase(Locale.ROOT);
+            stream = stream.filter(c -> c.getUniverse() != null
+                    && c.getUniverse().toLowerCase(Locale.ROOT).equals(target));
+        }
+
+        if (firstAppearanceYear != null) {
+            stream = stream.filter(c -> firstAppearanceYear.equals(c.getFirstAppearanceYear()));
+        }
+
+        if (beforeYear != null) {
+            stream = stream.filter(c -> c.getFirstAppearanceYear() != null
+                    && c.getFirstAppearanceYear() < beforeYear);
+        }
+
+        if (afterYear != null) {
+            stream = stream.filter(c -> c.getFirstAppearanceYear() != null
+                    && c.getFirstAppearanceYear() > afterYear);
+        }
+
+        if (sortBy != null) {
+            stream = stream.sorted(comparatorFor(sortBy));
+        }
+
+        return stream.collect(Collectors.toList());
+    }
+
+    /**
      * Filters active characters by universe (case-insensitive).
      * Throws InvalidRequestException when the universe value is blank.
      */
     public List<MarvelCharacter> filterByUniverse(String universe) {
-        if (universe == null || universe.isBlank()) {
-            throw new InvalidRequestException("Universe filter must not be blank");
-        }
-        String target = universe.trim().toLowerCase(Locale.ROOT);
-        return getAllActive().stream()
-                .filter(c -> c.getUniverse() != null
-                        && c.getUniverse().toLowerCase(Locale.ROOT).equals(target))
-                .collect(Collectors.toList());
+        return search(universe, null, null, null, null);
     }
 
     /**
@@ -70,37 +117,31 @@ public class MarvelCharacterService {
      * Supported fields: name, alias, power, universe, firstAppearanceYear
      */
     public List<MarvelCharacter> sortBy(String field) {
+        return search(null, null, null, null, field);
+    }
+
+    private Comparator<MarvelCharacter> comparatorFor(String field) {
         if (field == null || field.isBlank()) {
             throw new InvalidRequestException("Sort field must not be blank");
         }
 
-        Comparator<MarvelCharacter> comparator;
         switch (field.trim().toLowerCase(Locale.ROOT)) {
             case "name":
-                comparator = Comparator.comparing(MarvelCharacter::getName, String.CASE_INSENSITIVE_ORDER);
-                break;
+                return Comparator.comparing(MarvelCharacter::getName, String.CASE_INSENSITIVE_ORDER);
             case "alias":
-                comparator = Comparator.comparing(MarvelCharacter::getAlias, String.CASE_INSENSITIVE_ORDER);
-                break;
+                return Comparator.comparing(MarvelCharacter::getAlias, String.CASE_INSENSITIVE_ORDER);
             case "power":
-                comparator = Comparator.comparing(MarvelCharacter::getPower, String.CASE_INSENSITIVE_ORDER);
-                break;
+                return Comparator.comparing(MarvelCharacter::getPower, String.CASE_INSENSITIVE_ORDER);
             case "universe":
-                comparator = Comparator.comparing(MarvelCharacter::getUniverse, String.CASE_INSENSITIVE_ORDER);
-                break;
+                return Comparator.comparing(MarvelCharacter::getUniverse, String.CASE_INSENSITIVE_ORDER);
             case "firstappearanceyear":
             case "first_appearance_year":
-                comparator = Comparator.comparing(MarvelCharacter::getFirstAppearanceYear);
-                break;
+                return Comparator.comparing(MarvelCharacter::getFirstAppearanceYear);
             default:
                 throw new InvalidRequestException(
                         "Unsupported sort field: " + field
                                 + ". Supported fields: name, alias, power, universe, firstAppearanceYear");
         }
-
-        return getAllActive().stream()
-                .sorted(comparator)
-                .collect(Collectors.toList());
     }
 
     /**

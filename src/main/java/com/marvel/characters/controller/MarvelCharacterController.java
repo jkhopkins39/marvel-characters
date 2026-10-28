@@ -34,24 +34,30 @@ public class MarvelCharacterController {
 
     /**
      * GET /api/characters — returns all active (not deleted) characters.
-     * Optional query params:
-     *   ?universe=Earth-616  — filter by universe (400 if blank/invalid)
-     *   ?sortBy=name         — sort by a supported field (400 if unsupported)
+     * Optional query params (combinable):
+     *   ?universe=Earth-616
+     *   ?firstAppearanceYear=1966
+     *   ?beforeYear=1980
+     *   ?afterYear=1960
+     *   ?sortBy=name
      */
     @GetMapping
     public ResponseEntity<List<MarvelCharacter>> getAll(
             @RequestParam(required = false) String universe,
+            @RequestParam(required = false) Integer firstAppearanceYear,
+            @RequestParam(required = false) Integer beforeYear,
+            @RequestParam(required = false) Integer afterYear,
             @RequestParam(required = false) String sortBy) {
 
-        List<MarvelCharacter> results;
+        boolean hasFilters = universe != null
+                || firstAppearanceYear != null
+                || beforeYear != null
+                || afterYear != null
+                || sortBy != null;
 
-        if (universe != null) {
-            results = service.filterByUniverse(universe);
-        } else if (sortBy != null) {
-            results = service.sortBy(sortBy);
-        } else {
-            results = service.getAllActive();
-        }
+        List<MarvelCharacter> results = hasFilters
+                ? service.search(universe, firstAppearanceYear, beforeYear, afterYear, sortBy)
+                : service.getAllActive();
 
         return ResponseEntity.ok(results);
     }
