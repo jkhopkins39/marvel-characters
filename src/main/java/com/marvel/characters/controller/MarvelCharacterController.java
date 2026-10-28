@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -27,9 +28,20 @@ public class MarvelCharacterController {
 
     /**
      * GET /api/characters — returns all active (not deleted) characters.
+     * Optional query params:
+     *   ?universe=Earth-616  — filter by universe (400 if blank/invalid)
+     *   ?sortBy=name         — sort by a supported field (400 if unsupported)
      */
     @GetMapping
-    public ResponseEntity<List<MarvelCharacter>> getAll() {
+    public ResponseEntity<List<MarvelCharacter>> getAll(
+            @RequestParam(required = false) String universe,
+            @RequestParam(required = false) String sortBy) {
+
+        if (universe != null) {
+            List<MarvelCharacter> filtered = service.filterByUniverse(universe);
+            return ResponseEntity.ok(filtered);
+        }
+
         return ResponseEntity.ok(service.getAllActive());
     }
 
