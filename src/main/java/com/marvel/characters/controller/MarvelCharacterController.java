@@ -37,12 +37,17 @@ public class MarvelCharacterController {
             @RequestParam(required = false) String universe,
             @RequestParam(required = false) String sortBy) {
 
+        List<MarvelCharacter> results;
+
         if (universe != null) {
-            List<MarvelCharacter> filtered = service.filterByUniverse(universe);
-            return ResponseEntity.ok(filtered);
+            results = service.filterByUniverse(universe);
+        } else if (sortBy != null) {
+            results = service.sortBy(sortBy);
+        } else {
+            results = service.getAllActive();
         }
 
-        return ResponseEntity.ok(service.getAllActive());
+        return ResponseEntity.ok(results);
     }
 
     /**
