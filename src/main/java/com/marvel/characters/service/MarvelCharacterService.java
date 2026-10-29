@@ -55,6 +55,7 @@ public class MarvelCharacterService {
      * Filters and optionally sorts active characters.
      * Supported filters (combinable):
      *   universe — exact match (case-insensitive)
+     *   team — exact match (case-insensitive); use "none" for unaffiliated characters
      *   firstAppearanceYear — exact year
      *   beforeYear — firstAppearanceYear &lt; year
      *   afterYear — firstAppearanceYear &gt; year
@@ -62,6 +63,7 @@ public class MarvelCharacterService {
      */
     public List<MarvelCharacter> search(
             String universe,
+            String team,
             Integer firstAppearanceYear,
             Integer beforeYear,
             Integer afterYear,
@@ -69,6 +71,9 @@ public class MarvelCharacterService {
 
         if (universe != null && universe.isBlank()) {
             throw new InvalidRequestException("Universe filter must not be blank");
+        }
+        if (team != null && team.isBlank()) {
+            throw new InvalidRequestException("Team filter must not be blank");
         }
         if (beforeYear != null && afterYear != null && beforeYear <= afterYear) {
             throw new InvalidRequestException(
@@ -81,6 +86,16 @@ public class MarvelCharacterService {
             String target = universe.trim().toLowerCase(Locale.ROOT);
             stream = stream.filter(c -> c.getUniverse() != null
                     && c.getUniverse().toLowerCase(Locale.ROOT).equals(target));
+        }
+
+        if (team != null) {
+            String target = team.trim().toLowerCase(Locale.ROOT);
+            if ("none".equals(target) || "solo".equals(target)) {
+                stream = stream.filter(c -> c.getTeam() == null || c.getTeam().isBlank());
+            } else {
+                stream = stream.filter(c -> c.getTeam() != null
+                        && c.getTeam().toLowerCase(Locale.ROOT).equals(target));
+            }
         }
 
         if (firstAppearanceYear != null) {
@@ -106,18 +121,17 @@ public class MarvelCharacterService {
 
     /**
      * Filters active characters by universe (case-insensitive).
-     * Throws InvalidRequestException when the universe value is blank.
      */
     public List<MarvelCharacter> filterByUniverse(String universe) {
-        return search(universe, null, null, null, null);
+        return search(universe, null, null, null, null, null);
     }
 
     /**
      * Sorts active characters by a supported field using a Comparator and stream.
-     * Supported fields: name, alias, power, universe, firstAppearanceYear
+     * Supported fields: name, alias, power, universe, team, firstAppearanceYear
      */
     public List<MarvelCharacter> sortBy(String field) {
-        return search(null, null, null, null, field);
+        return search(null, null, null, null, null, field);
     }
 
     private Comparator<MarvelCharacter> comparatorFor(String field) {
@@ -134,13 +148,17 @@ public class MarvelCharacterService {
                 return Comparator.comparing(MarvelCharacter::getPower, String.CASE_INSENSITIVE_ORDER);
             case "universe":
                 return Comparator.comparing(MarvelCharacter::getUniverse, String.CASE_INSENSITIVE_ORDER);
+            case "team":
+                return Comparator.comparing(
+                        MarvelCharacter::getTeam,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
             case "firstappearanceyear":
             case "first_appearance_year":
                 return Comparator.comparing(MarvelCharacter::getFirstAppearanceYear);
             default:
                 throw new InvalidRequestException(
                         "Unsupported sort field: " + field
-                                + ". Supported fields: name, alias, power, universe, firstAppearanceYear");
+                                + ". Supported fields: name, alias, power, universe, team, firstAppearanceYear");
         }
     }
 
@@ -148,12 +166,14 @@ public class MarvelCharacterService {
      * Saves a new or updated character.
      */
     public MarvelCharacter save(MarvelCharacter character) {
+        if (character.getTeam() != null && character.getTeam().isBlank()) {
+            character.setTeam(null);
+        }
         return repository.save(character);
     }
 
     /**
      * Logically deletes a character by setting deleted to true.
-     * Throws ResourceNotFoundException if the character does not exist or is already deleted.
      */
     public MarvelCharacter logicalDelete(Long id) {
         Optional<MarvelCharacter> optional = repository.findById(id);

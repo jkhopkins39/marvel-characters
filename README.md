@@ -26,12 +26,13 @@ Practice building a full CRUD-style Spring Boot API with:
 | `alias` | `String` | Required civilian / hero identity |
 | `power` | `String` | Required primary power description |
 | `universe` | `String` | Required (e.g. `Earth-616`, `Earth-1610`) |
+| `team` | `String` | Optional (e.g. `X-Men`, `Avengers`, `Fantastic Four`) |
 | `firstAppearanceYear` | `Integer` | Required, must be between 1939 and 2100 |
 | `deleted` | `boolean` | Logical deletion flag (default `false`) |
 
 ## Starter data
 
-On first startup the app loads eight characters, including Spider-Man, Iron Man, Black Panther, Captain Marvel, Wolverine, Scarlet Witch, Doctor Strange, and Miles Morales (Earth-1610).
+On first startup the app loads characters across teams (Avengers, X-Men, Fantastic Four) plus a couple of unaffiliated heroes (Doctor Strange, Miles Morales).
 
 ## Requirements
 
@@ -62,6 +63,7 @@ Base path: `/api/characters`
 | `GET` | `/api/characters` | List all **active** characters | `200` |
 | `GET` | `/api/characters/{id}` | Get one active character by ID | `200`, `404` |
 | `GET` | `/api/characters?universe=Earth-616` | Filter by universe | `200`, `400` |
+| `GET` | `/api/characters?team=X-Men` | Filter by team (`none` = no team) | `200`, `400` |
 | `GET` | `/api/characters?firstAppearanceYear=1966` | Filter by exact debut year | `200`, `400` |
 | `GET` | `/api/characters?beforeYear=1980` | Debut year **&lt;** value | `200`, `400` |
 | `GET` | `/api/characters?afterYear=1970` | Debut year **&gt;** value | `200`, `400` |
@@ -77,6 +79,7 @@ Filters and `sortBy` can be combined, for example:
 | Param | Meaning | Example |
 | --- | --- | --- |
 | `universe` | Exact match (case-insensitive) | `?universe=Earth-616` |
+| `team` | Exact match (case-insensitive); `none`/`solo` for unaffiliated | `?team=X-Men` |
 | `firstAppearanceYear` | Exact debut year | `?firstAppearanceYear=1966` |
 | `beforeYear` | `firstAppearanceYear < year` | `?beforeYear=1980` |
 | `afterYear` | `firstAppearanceYear > year` | `?afterYear=1970` |
@@ -87,7 +90,7 @@ Filters and `sortBy` can be combined, for example:
 ### Sort choices
 
 - Query param: `sortBy`
-- Supported fields: `name`, `alias`, `power`, `universe`, `firstAppearanceYear`
+- Supported fields: `name`, `alias`, `power`, `universe`, `team`, `firstAppearanceYear`
 - Example: `/api/characters?sortBy=name`
 - Unsupported fields return **400 Bad Request**
 
@@ -99,6 +102,7 @@ Filters and `sortBy` can be combined, for example:
   "alias": "Ororo Munroe",
   "power": "Weather control",
   "universe": "Earth-616",
+  "team": "X-Men",
   "firstAppearanceYear": 1975
 }
 ```

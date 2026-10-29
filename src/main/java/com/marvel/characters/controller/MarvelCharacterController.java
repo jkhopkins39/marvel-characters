@@ -36,27 +36,31 @@ public class MarvelCharacterController {
      * GET /api/characters — returns all active (not deleted) characters.
      * Optional query params (combinable):
      *   ?universe=Earth-616
+     *   ?team=X-Men
+     *   ?team=none          — characters with no team
      *   ?firstAppearanceYear=1966
      *   ?beforeYear=1980
      *   ?afterYear=1960
-     *   ?sortBy=name
+     *   ?sortBy=team
      */
     @GetMapping
     public ResponseEntity<List<MarvelCharacter>> getAll(
             @RequestParam(required = false) String universe,
+            @RequestParam(required = false) String team,
             @RequestParam(required = false) Integer firstAppearanceYear,
             @RequestParam(required = false) Integer beforeYear,
             @RequestParam(required = false) Integer afterYear,
             @RequestParam(required = false) String sortBy) {
 
         boolean hasFilters = universe != null
+                || team != null
                 || firstAppearanceYear != null
                 || beforeYear != null
                 || afterYear != null
                 || sortBy != null;
 
         List<MarvelCharacter> results = hasFilters
-                ? service.search(universe, firstAppearanceYear, beforeYear, afterYear, sortBy)
+                ? service.search(universe, team, firstAppearanceYear, beforeYear, afterYear, sortBy)
                 : service.getAllActive();
 
         return ResponseEntity.ok(results);
@@ -78,6 +82,7 @@ public class MarvelCharacterController {
     /**
      * POST /api/characters — create a new character from validated JSON.
      * Returns 201 Created on success, 400 Bad Request when validation fails.
+     * Team is optional.
      */
     @PostMapping
     public ResponseEntity<MarvelCharacter> create(@Valid @RequestBody MarvelCharacter character) {

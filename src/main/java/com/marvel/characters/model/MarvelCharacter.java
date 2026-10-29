@@ -14,7 +14,7 @@ import jakarta.validation.constraints.Size;
 
 /**
  * JPA entity representing a Marvel Comics character.
- * Uses a generated ID, validated fields, and a deleted flag for logical deletion.
+ * Uses a generated ID, validated fields, an optional team, and a deleted flag for logical deletion.
  */
 @Entity
 @Table(name = "marvel_characters")
@@ -43,6 +43,14 @@ public class MarvelCharacter {
     @Column(nullable = false, length = 50)
     private String universe;
 
+    /**
+     * Optional team affiliation (e.g. X-Men, Avengers, Fantastic Four).
+     * Null or blank means the character is unaffiliated / solo.
+     */
+    @Size(max = 100, message = "Team must be at most 100 characters")
+    @Column(length = 100)
+    private String team;
+
     @NotNull(message = "First appearance year is required")
     @Min(value = 1939, message = "First appearance year must be 1939 or later")
     @Max(value = 2100, message = "First appearance year must be 2100 or earlier")
@@ -55,12 +63,14 @@ public class MarvelCharacter {
     public MarvelCharacter() {
     }
 
-    public MarvelCharacter(String name, String alias, String power, String universe, Integer firstAppearanceYear) {
+    public MarvelCharacter(String name, String alias, String power, String universe,
+                           Integer firstAppearanceYear, String team) {
         this.name = name;
         this.alias = alias;
         this.power = power;
         this.universe = universe;
         this.firstAppearanceYear = firstAppearanceYear;
+        this.team = team;
         this.deleted = false;
     }
 
@@ -102,6 +112,14 @@ public class MarvelCharacter {
 
     public void setUniverse(String universe) {
         this.universe = universe;
+    }
+
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
     }
 
     public Integer getFirstAppearanceYear() {
